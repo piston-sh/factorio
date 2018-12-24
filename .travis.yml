@@ -1,0 +1,20 @@
+services:
+  - docker
+
+script:
+  - docker build -t pistonsh/factorio:$TRAVIS_BUILD_NUMBER .
+  - docker tag pistonsh/factorio:$TRAVIS_BUILD_NUMBER pistonsh/factorio:latest
+
+before_deploy:
+  - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+
+deploy:
+  provider: script
+  script: bash .travisci/deploy.sh
+  on:
+    branch: master
+
+after_success:
+  - ./.travisci/send.sh success $DISCORD_WEBHOOK_URL
+after_failure:
+  - ./.travisci/send.sh failure $DISCORD_WEBHOOK_URL
