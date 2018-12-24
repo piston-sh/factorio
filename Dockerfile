@@ -5,7 +5,8 @@ ARG user=factorio
 ARG group=factorio
 ARG puid=845
 ARG pgid=845
-ARG gamedir=/factorio
+ARG gamedir=/opt/factorio
+ARG volumedir=/factorio
 
 ENV PORT=34197 \
     RCON_PORT=27015 \
@@ -17,6 +18,7 @@ ENV PORT=34197 \
     SCENARIOS=/factorio/scenarios \
     SCRIPTOUTPUT=/factorio/script-output
 
+# Install dependencies & factorio headless
 RUN mkdir -p /opt /factorio && \
     apk add --update --no-cache pwgen && \
     apk add --update --no-cache --virtual .build-deps curl && \
@@ -25,14 +27,18 @@ RUN mkdir -p /opt /factorio && \
     echo "$SHA1  /tmp/factorio_headless_x64_$VERSION.tar.xz" | sha1sum -c && \
     tar xf /tmp/factorio_headless_x64_$VERSION.tar.xz --directory /opt && \
     chmod ugo=rwx /opt/factorio && \
-    rm /tmp/factorio_headless_x64_$VERSION.tar.xz && \
-    ln -s $SAVES /opt/factorio/saves && \
+    rm /tmp/factorio_headless_x64_$VERSION.tar.xz
+
+# Symlink folders
+RUN ln -s $SAVES /opt/factorio/saves && \
     ln -s $MODS /opt/factorio/mods && \
     ln -s $SCENARIOS /opt/factorio/scenarios && \
-    ln -s $SCRIPTOUTPUT /opt/factorio/script-output && \
-    apk del .build-deps && \
-    addgroup -g $PGID -S $group && \
-    adduser -u $PUID -G $group -s /bin/sh -SDH $user && \
+    ln -s $SCRIPTOUTPUT /opt/factorio/script-output
+
+# Cleanup and add users
+RUN apk del .build-deps && \
+    addgroup -g $pgid -S $group && \
+    adduser -u $puid -G $group -s /bin/sh -SDH $user && \
     chown -R $user:$group /opt/factorio /factorio
 
 EXPOSE $PORT/udp 
@@ -40,7 +46,7 @@ EXPOSE $RCON_PORT/tcp
 
 USER $user
 
-VOLUME $gamedir
+VOLUME $volumedir
 
 COPY --chown=$user:$group start.sh start.sh
 ENTRYPOINT ["./start.sh"]
