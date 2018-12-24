@@ -45,8 +45,7 @@ EXPOSE $PORT/udp
 EXPOSE $RCON_PORT/tcp
 
 USER $user
-
 VOLUME $volumedir
 
-COPY --chown=$user:$group start.sh start.sh
+COPY start.sh start.sh
 ENTRYPOINT ["./start.sh"]
